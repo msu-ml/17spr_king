@@ -27,7 +27,7 @@
 % affiliation/address with \affaddr, and tag the
 % e-mail address with \email.
 %
-% 1st. author
+% only author :(
 \alignauthor
 Grant King\\
        \email{kinggra1@msu.edu}
@@ -47,7 +47,7 @@ Grant King\\
 \centering
 \includegraphics[width=\textwidth]{images/SkinnyDipExample}
 \caption{The running example used by Maurus, et al. throughout \cite{skinnydip}}
-\label{fig:algor}
+\label{fig:sdexample}
 \end{figure*}
 
 \section{Problem Description}
@@ -55,7 +55,7 @@ It is not uncommon for some real-world data sets to feature an abundance of nois
 
 The dip views the structure of the Empirical Cumulative Distribution Function(ECDF) of a set of single dimensional data to determine whether it is unimodal or multimodal. This test is expanded to a multidimensional, recursive heuristic in order to isolate the various modes of each feature of a set of data. This results in a deterministic, parameter-free, unsupervised method of finding clusters that are based on the modes of multivariate distributions. 
 
-A visual example of the purpose of SkinnyDip is demonstrated in the running example from \cite{skinnydip} which shows the extraction of distinct shapes from a two-dimensional data field that consists of 80\% static noise. A variety of similar clustering methods were shown to perform poorly on this data set, both through the inclusion of the evenly-distributed, static noise in clusters, and through over-segmentation of the existing classes.
+A visual example of the purpose of SkinnyDip is demonstrated in the running example from \cite{skinnydip} (See Figure \ref{fig:sdexample}) which shows the extraction of distinct shapes from a two-dimensional data field that consists of 80\% static noise. A variety of similar clustering methods were shown to perform poorly on this data set, both through the inclusion of the evenly-distributed, static noise in clusters, and through excessive segmentation of the actual classes.
 
 My goal is to implement the SkinnyDip algorithm and perform additional tests to demonstrate its usefulness on noisy, real-world data sets, with a final goal of reducing the extraneous information introduced by SkinnyDip's hypercubic boundaries through extension with a second clustering method.
 
@@ -76,7 +76,13 @@ A single other existing method for clustering using the statistical dip test was
 \end{figure*}
 
 \section{Project Milestones}
-Projected Project Milestones are given in \ref{fig:milestones}. It appears that most of the work will be in creating an actual implementation of the SkinnyDip algorithm itself in MATLAB. This may be mitigated by using an existing code base implemented in R and focusing more on the testing and extension vs. the algorithm itself, though this would require the extra learning curve of an entirely new language and tool set. Beyond this, the work that will largely be reported for this project will involve working with some real-world data (currently considering star data and galaxy clustering) as well as testing methods to improve the accuracy of SkinnyDip under higher-dimensional data sets.
+Projected Project Milestones are given in \ref{fig:milestones}. It appears that most of the work will be in creating an actual implementation of the SkinnyDip algorithm itself in MATLAB. This may be mitigated by using an existing code base implemented in R and focusing more on the testing and extension vs. the algorithm itself, though this would require the extra learning curve of an entirely new language and tool set. 
+
+In order to obtain a solid understanding of the algorithm itself, I am inclined to perform a migration of the code, which may also help determine where future extensions should be worked in. For an additional level of understanding, I plan on spending some time before the intermediate milestone testing the dip-based clustering method on synthetic data sets to determine what kinds of data may cause issues.
+
+Beyond this, the work that will largely be reported for this project will involve working with some real-world data (currently considering star data and galaxy clustering) as well as testing methods to improve the accuracy of SkinnyDip under higher-dimensional data sets.
+
+
 \bibliography{proj-proposal}
 \bibliographystyle{unsrt}
 \end{document}
