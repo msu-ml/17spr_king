@@ -53,7 +53,7 @@ Grant King\\
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{images/SkinnyDipAccuracy}
-\caption{Accuracies of the given SkinnyDip example}
+\caption{Accuracies of the given SkinnyDip example. NOTE: introduced a bug while updating code that caused legend labels to be shuffled incorrectly, reported data does not correctly match class colors.}
 \label{fig:sdaccuracy}
 \end{figure*}
 
@@ -82,7 +82,11 @@ Aside from the uniform background noise, the running example data consists of 2 
 \section{Progress}
 An updated project timeline can be seen in Figure \ref{fig:newmilestones}
 \subsection{Completed}
-In my analysis of this synthetic data, it is clear that Gaussian models composed of a large number of false positives, even in just this 2D case. An image analyzing the the classification accuracy of this particular data set is seen in Figure \ref{fig:sdaccuracy}. In this image, the locations of the different clusters are the same, but the coloration has changed slightly, the two leftmost shapes (green and teal) are still the rectangularly modeled clusters, and the four, smaller shapes are the 2D Gaussian clusters.
+To confirm my suspicion of the high rate of false positive detection in the non-rectangular clusters, I developed some numerical and visual testing tools to 
+
+In my analysis of this synthetic data, it is clear that Gaussian models composed of a large number of false positives, even in just this 2D case. An image analyzing the the classification accuracy of this particular data set is seen in Figure \ref{fig:sdaccuracy}. In this image, the locations of the different clusters are the same, but the coloration has changed slightly, the two leftmost shapes (black and red) are still the rectangularly modeled clusters, and the four, smaller shapes are the 2D Gaussian clusters.
+
+The classes with rectangular models were the only classes that had a false positive rate below 10\%, while the Gaussian modeled classes had false positive ranges that ranged from 10.2\% up to 21.4\%. This supports my hypothesis that the Gaussian modeled clusters would significantly over-sample from their respective classes.
 
 
 \begin{figure*}[t]
