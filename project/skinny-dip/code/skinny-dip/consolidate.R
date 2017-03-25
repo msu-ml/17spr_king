@@ -2,13 +2,15 @@ runningExample <- function() {
 	runningExampleDataSet <- generateRunningExampleDataSet();
 	runningExampleDataMatrix <- as.matrix(runningExampleDataSet[,2:3]); 
 	resultLabels <- skinnyDipClusteringFullSpace(runningExampleDataMatrix); 
-	resultLabels <- maximizeLabels(resultLabels, runningExampleDataSet[,4])
+	#resultLabels <- maximizeLabels(resultLabels, runningExampleDataSet[,4])
 	
 	labels <- generateAccuracyLabels(resultLabels, runningExampleDataSet[,4]);
 
 	classCols <- labels[,2]
 	labels <- labels[,1]
 	classCols[1] <- 8
+	print(labels)
+	print(classCols)
 	resultLabels[resultLabels == 0] <- 8;
 
 	plot(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], col=resultLabels);
@@ -32,6 +34,11 @@ generateAccuracyLabels <- function(labels, ground_truth) {
 calculateAccuracy <- function(labels, ground_truth) {
 
 	labels <- maximizeLabels(labels, ground_truth)
+	print(labels)
+	oldlabels <- unique(labels[,2])
+	print(oldlabels)
+	labels <- labels[,1]
+	print(labels)
 	
 	result <- matrix(0, max(ground_truth)+1, 5)
 
@@ -49,7 +56,7 @@ calculateAccuracy <- function(labels, ground_truth) {
 		cat("False negatives rate: ",sum(falseNeg)/total, '\n')
 		cat("False positives rate: ", sum(falsePos)/total, '\n')
 		cat("Total points: ", sum(valids), '\n\n')
-		result[i+1,] <- c(sum(found)/total, sum(falseNeg)/total, sum(falsePos)/total, total, i)		
+		result[i+1,] <- c(sum(found)/total, sum(falseNeg)/total, sum(falsePos)/total, total, oldlabels[i+1])		
 	}
 
 	return(result)
@@ -59,7 +66,8 @@ maximizeLabels <- function(labels, ground_truth) {
 	
 	## find best ground_truth label for the unsupervised labels
 	## assumes that the best match will be the one with the highest overlap for each class
-	shuffled <- labels
+	shuffled <- matrix(labels, length(labels), 2)
+	print(shuffled)
 	for(i in 1:max(ground_truth)) {
 		truth <- (ground_truth == i)
 		maxlabel <- 0
@@ -73,7 +81,7 @@ maximizeLabels <- function(labels, ground_truth) {
 			}
 		}
 		## index into the highest matched labels and change them to the ground_truth
-		shuffled[labels == maxlabel] <- i
+		shuffled[labels == maxlabel,1] <- i
 	}
 
 	return(shuffled)
