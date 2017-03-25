@@ -933,12 +933,12 @@ generateRunningExampleDataSet <- function(noiseFraction0to1=0.8){
     c1x <- rnorm(clusterSize, 0.9, 0.02); c1y <- rnorm(clusterSize, 0.2, 0.02); c2x <- rnorm(clusterSize, 0.8, 0.02); c2y <- rnorm(clusterSize, 0.2, 0.02); c3x <- runif(clusterSize, 0.2, 0.205); c3y <- runif(clusterSize, 0.1, 0.9); c4x <- rnorm(clusterSize, 0.7, 0.01); c4y <- rnorm(clusterSize, 0.9, 0.01); c5x <- runif(clusterSize, 0.44, 0.56); c5y <- runif(clusterSize, 0.44, 0.56); c6x <- rnorm(clusterSize, 0.8, 0.02); c6y <- rnorm(clusterSize, 0.3, 0.02);
     xVals <- c(xVals, c1x,c2x,c3x,c4x,c5x, c6x);
     yVals <- c(yVals, c1y,c2y,c3y,c4y,c5y,c6y);
-    numNonNoisePoints <- length(xVals);
+    numNonNoisePoints <- length(xVals); ##0
     numNoisePoints <- round((numNonNoisePoints*noiseFraction0to1)/(1-noiseFraction0to1));
     xVals <- c(xVals, runif(numNoisePoints));
     yVals <- c(yVals, runif(numNoisePoints));
     dataMatrix <- matrix(c(xVals, yVals), length(xVals), 2);
-    
+
     groundTruthLabels <- replicate(length(xVals),0)
     groundTruthLabels[sqrt(rowSums((dataMatrix-matrix(replicate(length(xVals), c(0.9,0.2)), length(xVals), 2, byrow=TRUE))^2))<0.04] <- 1
     groundTruthLabels[sqrt(rowSums((dataMatrix-matrix(replicate(length(xVals), c(0.8,0.2)), length(xVals), 2, byrow=TRUE))^2))<0.04] <- 2
