@@ -2,10 +2,12 @@ runningExample <- function() {
 	runningExampleDataSet <- generateRunningExampleDataSet();
 	runningExampleDataMatrix <- as.matrix(runningExampleDataSet[,2:3]); 
 	resultLabels <- skinnyDipClusteringFullSpace(runningExampleDataMatrix); 
+	resultLabels <- maximizeLabels(resultLabels, runningExampleDataSet[,4])
 	
 	labels <- generateAccuracyLabels(resultLabels, runningExampleDataSet[,4]);
 
-	classCols <- seq(0, max(resultLabels), 1)
+	classCols <- labels[,2]
+	labels <- labels[,1]
 	classCols[1] <- 8
 	resultLabels[resultLabels == 0] <- 8;
 
@@ -18,10 +20,10 @@ runningExample <- function() {
 
 generateAccuracyLabels <- function(labels, ground_truth) {
 	accuracies <- calculateAccuracy(labels, ground_truth)
-	accuracyLabels <- matrix("", nrow(accuracies))
+	accuracyLabels <- matrix("", nrow(accuracies), 2)
 
 	for (i in 1:nrow(accuracies)) {
-		accuracyLabels[i] <- sprintf("Total: %d Correct: %.3f, FalseN: %f, FalseP: %f", accuracies[i,4], accuracies[i,1], accuracies[i,2], accuracies[i,3])
+		accuracyLabels[i,] <- c(sprintf("Total: %d Correct: %.3f, FalseN: %f, FalseP: %f", accuracies[i,4], accuracies[i,1], accuracies[i,2], accuracies[i,3]), accuracies[i,5])
 	}
 	return(accuracyLabels)
 }
@@ -31,7 +33,7 @@ calculateAccuracy <- function(labels, ground_truth) {
 
 	labels <- maximizeLabels(labels, ground_truth)
 	
-	result <- matrix(0, max(ground_truth)+1, 4)
+	result <- matrix(0, max(ground_truth)+1, 5)
 
 	for(i in 0:max(ground_truth)) {
 		valids <- (ground_truth == i)
@@ -47,7 +49,7 @@ calculateAccuracy <- function(labels, ground_truth) {
 		cat("False negatives rate: ",sum(falseNeg)/total, '\n')
 		cat("False positives rate: ", sum(falsePos)/total, '\n')
 		cat("Total points: ", sum(valids), '\n\n')
-		result[i+1,] <- c(sum(found)/total, sum(falseNeg)/total, sum(falsePos)/total, total)		
+		result[i+1,] <- c(sum(found)/total, sum(falseNeg)/total, sum(falsePos)/total, total, i)		
 	}
 
 	return(result)
