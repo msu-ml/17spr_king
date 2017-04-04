@@ -128,3 +128,7 @@ generateDataSet <- function(noiseFraction0to1=0.8){
 }
 
 
+# Generate our own custom data in multiple dimension
+generateMultiDim <- function(dims) {
+    
+}
