@@ -1,27 +1,41 @@
 runningExample <- function() {
-	runningExampleDataSet <- generateDataSet();
+	#runningExampleDataSet <- generateDataSet();
 	#runningExampleDataSet <- generateSyntheticDataSet(10, 2, 0.6)
+        runningExampleDataSet <- generateGaussian(2);	
+
+        colCount <- ncol(runningExampleDataSet);
+
+	runningExampleDataMatrix <- as.matrix(runningExampleDataSet[,2:(colCount-1)]); 
+        resultLabels <- skinnyDipClusteringFullSpace(runningExampleDataMatrix); 
 	
-	runningExampleDataMatrix <- as.matrix(runningExampleDataSet[,2:3]); 
-	resultLabels <- skinnyDipClusteringFullSpace(runningExampleDataMatrix); 
+	labels <- generateAccuracyLabels(resultLabels, runningExampleDataSet[,colCount]);
 	
-	labels <- generateAccuracyLabels(resultLabels, runningExampleDataSet[,4]);
-	gtcols = runningExampleDataSet[,4]
-	print(gtcols)
+        
+        gtcols = runningExampleDataSet[,colCount]
+	#print(gtcols)
 	gtcols[gtcols == 0] <- 8
 
 	classCols <- labels[,2]
 	labels <- labels[,1]
 	classCols[1] <- 8
-	print(labels)
-	print(classCols)
+	#print(labels)
+	#print(classCols)
 	resultLabels[resultLabels == 0] <- 8;
 
+	# hard coded 1D plot
+	#plot(runningExampleDataMatrix[,1], rep(0.5, nrow(runningExampleDataMatrix)), col=gtcols, xlim=c(0,1));
+	#legend("bottomleft", labels, bg="white",  pch='o', col=classCols, cex=0.75)
+        #title("Accuracies in SkinnyDip Running Example")
+
+	# hard coded 2D plot
 	plot(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], col=gtcols, xlim=c(0,1), ylim=c(0,1));
 	legend("bottomleft", labels, bg="white",  pch='o', col=classCols, cex=0.75)
 	title("Accuracies in SkinnyDip Running Example")
 		
 	## plot(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], col=resultLabels);
+
+
+	# hard coded 3D plot
 }
 
 
@@ -50,8 +64,8 @@ calculateAccuracy <- function(labels, ground_truth) {
 		found <- (valids == TRUE & reported == TRUE)
 		falseNeg <- (valids == TRUE & reported == FALSE)
 		falsePos <- (valids == FALSE & reported == TRUE)
-		print(sum(valids))
-		print(sum(reported))
+		#print(sum(valids))
+		#print(sum(reported))
 
 		reportedtotal <- sum(reported)
 		validtotal <- sum(valids)
@@ -106,7 +120,7 @@ generateDataSet <- function(noiseFraction0to1=0.8){
     c1x <- rnorm(clusterSize, 0.9, 0.02); c1y <- rnorm(clusterSize, 0.2, 0.02); c2x <- rnorm(clusterSize, 0.8, 0.02); c2y <- rnorm(clusterSize, 0.2, 0.02); c3x <- runif(clusterSize, 0.2, 0.205); c3y <- runif(clusterSize, 0.1, 0.9); c4x <- rnorm(clusterSize, 0.7, 0.01); c4y <- rnorm(clusterSize, 0.9, 0.01); c5x <- runif(clusterSize, 0.44, 0.56); c5y <- runif(clusterSize, 0.44, 0.56); c6x <- rnorm(clusterSize, 0.8, 0.02); c6y <- rnorm(clusterSize, 0.3, 0.02);
     xVals <- c(xVals, c1x,c2x,c3x,c4x,c5x, c6x);
     yVals <- c(yVals, c1y,c2y,c3y,c4y,c5y,c6y);
-    numNonNoisePoints <- 0#length(xVals);
+    numNonNoisePoints <- length(xVals);
     numNoisePoints <- round((numNonNoisePoints*noiseFraction0to1)/(1-noiseFraction0to1));
     xVals <- c(xVals, runif(numNoisePoints));
     yVals <- c(yVals, runif(numNoisePoints));
@@ -130,5 +144,39 @@ generateDataSet <- function(noiseFraction0to1=0.8){
 
 # Generate our own custom data in multiple dimension
 generateMultiDim <- function(dims) {
+    
+}
+
+generateGaussian <- function(dimensions = 2, noiseFraction0to1=0.8) {
+    set.seed(195);
+    pointsPerDimension <- 100;
+    clusterSize <- pointsPerDimension*dimensions;
+    nonNoiseCount <- clusterSize;
+    noiseCount <- round((nonNoiseCount*noiseFraction0to1)/(1-noiseFraction0to1));
+
+    dataMatrix <- c();
+    
+    for (i in 1:dimensions) {
+        dataMatrix <- c(dataMatrix, rnorm(pointsPerDimension, 0.5, 0.05), runif(noiseCount));    
+    }
+    
+    # ground truth labels
+    dataMatrix <- c(dataMatrix, rep(1, pointsPerDimension), rep(0, noiseCount));
+
+    # match data structure of paper data by adding leading column
+    dataMatrix <- c(rep(-1, pointsPerDimension), rep(-1, noiseCount), dataMatrix);
+
+    # reshape 
+    dataMatrix <- matrix(dataMatrix, pointsPerDimension+noiseCount, dimensions+2);    
+
+    # label underlying noise
+    colCount = ncol(dataMatrix)
+    dataMatrix[sqrt(rowSums((dataMatrix[,2:(colCount-1)]-matrix(rep(0.5, dimensions*(pointsPerDimension+noiseCount)), pointsPerDimension+noiseCount, dimensions))^2))<0.2,colCount] <- 1;
+
+    # shuffle
+    dataMatrix <- dataMatrix[sample(1:nrow(dataMatrix), nrow(dataMatrix)),]
+
+    set.seed(NULL);
+    return(dataMatrix);
     
 }
