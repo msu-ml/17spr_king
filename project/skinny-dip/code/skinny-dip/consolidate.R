@@ -1,7 +1,36 @@
-runningExample <- function() {
-	#runningExampleDataSet <- generateDataSet();
+testDimensionsNew <- function(maxDim) {
+	
+}
+
+testDimensionsOld <- function(maxDim) {
+	results = c()
+	for (i in 1:maxDim) {
+		data <- generateGaussian(i);
+		colCount <- ncol(data)
+		dataMatrix <- as.matrix(data[,2:(colCount-1)]);
+		resultLabels <- skinnyDipClusteringFullSpace(dataMatrix);
+		gtlabels <- data[,colCount];
+
+		accuracies <- calculateAccuracy(resultLabels, gtlabels);
+		print(accuracies[2,2])
+
+		results <- c(results, i, accuracies[2,2], accuracies[2,3]);
+	}
+	results <- matrix(results, 3, maxDim);
+	plot();
+	lines(results[1,], results[2,], type='b');
+	title("Single Gaussian Cluster FPR over Dimensionality", xlab="Dimensions", ylab="False Positive Rate")
+	
+	#plot(results[1,], results[3,]);
+	#lines(results[1,], results[3,]);
+}
+
+
+
+runningExample <- function(dimensions=3) {
+        #runningExampleDataSet <- generateDataSet();
 	#runningExampleDataSet <- generateSyntheticDataSet(10, 2, 0.6)
-        runningExampleDataSet <- generateGaussian(2);	
+        runningExampleDataSet <- generateGaussian(dimensions);	
 
         colCount <- ncol(runningExampleDataSet);
 
@@ -22,20 +51,23 @@ runningExample <- function() {
 	#print(classCols)
 	resultLabels[resultLabels == 0] <- 8;
 
-	# hard coded 1D plot
-	#plot(runningExampleDataMatrix[,1], rep(0.5, nrow(runningExampleDataMatrix)), col=gtcols, xlim=c(0,1));
-	#legend("bottomleft", labels, bg="white",  pch='o', col=classCols, cex=0.75)
-        #title("Accuracies in SkinnyDip Running Example")
-
-	# hard coded 2D plot
-	plot(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], col=gtcols, xlim=c(0,1), ylim=c(0,1));
-	legend("bottomleft", labels, bg="white",  pch='o', col=classCols, cex=0.75)
-	title("Accuracies in SkinnyDip Running Example")
-		
-	## plot(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], col=resultLabels);
-
-
-	# hard coded 3D plot
+        if (dimensions == 1) {
+		# hard coded 1D plot
+		plot(runningExampleDataMatrix[,1], rep(0.5, nrow(runningExampleDataMatrix)), col=gtcols, xlim=c(0,1));
+		legend("bottomleft", labels, bg="white",  pch='o', col=classCols, cex=0.75)
+        	title("Accuracies in SkinnyDip Running Example")
+	}
+	else if (dimensions == 2) {
+		# hard coded 2D plot
+		plot(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], col=gtcols, xlim=c(0,1), ylim=c(0,1));
+		legend("bottomleft", labels, bg="white",  pch='o', col=classCols, cex=0.75)
+		title("Accuracies in SkinnyDip Running Example")
+	}	
+	else if (dimensions == 3) {
+		# hard coded 3D plot
+        	scatterplot3d(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], runningExampleDataMatrix[,3], color=gtcols)
+        	legend("topleft", labels, bg="white", pch='o', col=classCols, cex=0.75)
+	}
 }
 
 
@@ -64,16 +96,21 @@ calculateAccuracy <- function(labels, ground_truth) {
 		found <- (valids == TRUE & reported == TRUE)
 		falseNeg <- (valids == TRUE & reported == FALSE)
 		falsePos <- (valids == FALSE & reported == TRUE)
-		#print(sum(valids))
-		#print(sum(reported))
+
+                negtotal = sum(!valids)
+                reportedtotal <- sum(reported)
+                validtotal <- sum(valids)
+
+                falseNegRate = sum(falseNeg)/validtotal
+                falsePosRate = sum(falsePos)/negtotal
 
 		reportedtotal <- sum(reported)
 		validtotal <- sum(valids)
-		cat("Correct classification rate: ",sum(found)/validtotal,'\n')
-		cat("False negatives rate: ",sum(falseNeg)/validtotal, '\n')
-		cat("False positives rate: ", sum(falsePos)/reportedtotal, '\n')
-		cat("Total points: ", sum(valids), '\n\n')
-		result[i+1,] <- c(sum(found)/validtotal, sum(falseNeg)/validtotal, sum(falsePos)/reportedtotal, validtotal, i)		
+		#cat("Correct classification rate: ",sum(found)/validtotal,'\n')
+		#cat("False negatives rate: ",falseNegRate, '\n')
+		#cat("False positives rate: ", falsePosRate, '\n')
+		#cat("Total points: ", sum(valids), '\n\n')
+		result[i+1,] <- c(sum(found)/validtotal, falseNegRate, falsePosRate, validtotal, i)		
 	}
 
 	return(result)
@@ -84,7 +121,6 @@ maximizeLabels <- function(labels, ground_truth) {
 	## find best ground_truth label for the unsupervised labels
 	## assumes that the best match will be the one with the highest overlap for each class
 	shuffled <- matrix(labels, length(labels), 2)
-	print(max(ground_truth))
 	for(i in 0:max(ground_truth)) {
 		truth <- (ground_truth == i)
 		maxlabel <- 0
@@ -98,7 +134,7 @@ maximizeLabels <- function(labels, ground_truth) {
 			}
 		}
 		## index into the highest matched labels and change them to the ground_truth
-		cat("Count for, ",i,": ",maxcount," - labeled ",  maxlabel,'\n')
+		#cat("Count for, ",i,": ",maxcount," - labeled ",  maxlabel,'\n')
 		shuffled[labels == maxlabel,1] <- i
 	}
 
@@ -171,7 +207,7 @@ generateGaussian <- function(dimensions = 2, noiseFraction0to1=0.8) {
 
     # label underlying noise
     colCount = ncol(dataMatrix)
-    dataMatrix[sqrt(rowSums((dataMatrix[,2:(colCount-1)]-matrix(rep(0.5, dimensions*(pointsPerDimension+noiseCount)), pointsPerDimension+noiseCount, dimensions))^2))<0.2,colCount] <- 1;
+    dataMatrix[sqrt(rowSums((dataMatrix[,2:(colCount-1)]-matrix(rep(0.5, dimensions*(pointsPerDimension+noiseCount)), pointsPerDimension+noiseCount, dimensions))^2))<0.1,colCount] <- 1;
 
     # shuffle
     dataMatrix <- dataMatrix[sample(1:nrow(dataMatrix), nrow(dataMatrix)),]
