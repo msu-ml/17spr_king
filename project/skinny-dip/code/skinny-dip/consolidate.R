@@ -1,9 +1,61 @@
-testDimensionsNew <- function(maxDim) {
+clusterLabels <- function(labels, data) {
 	
+	dimensions = ncol(data);
+	# Ignore 0 cluster, because we won't change rejection class
+	for (class in 1:max(labels)) {
+		mask = labels==class;
+		evidence = data[mask,];
+		
+		if (dimensions < 2) {
+			mean <- mean(evidence);
+			variance <- (var(evidence));
+		} else {
+			print(evidence);
+			mean <- colMeans(evidence);
+			print(mean);
+			variance <- (cov(evidence));
+			print(variance);
+			scores = mahalanobis(evidence, mean, variance);
+			print(sum(scores<2));
+			plot(evidence[,1], evidence[,2], xlim=c(0,1), ylim=c(0,1));
+		}
+	}
 }
 
+
+
+# generate False Positive and False Negative error rates for
+# Gaussian clusters of varying dimension using additional clustering
+testDimensionsNew <- function(maxDim) {
+	results = c();
+	
+	# test data on each dimensionality from 1 up to maxDim
+	for (i in 1:maxDim) {
+		# Generate data
+		data <- generateGaussian(i);
+		colCount <- ncol(data);
+		dataMatrix <- as.matrix(data[,2:(colCount-1)]);
+                resultLabels <- skinnyDipClusteringFullSpace(dataMatrix);
+ 		
+		# perform additional clustering
+		newLabels <- clusterLabels(resultLabels, dataMatrix);
+               
+		gtlabels <- data[,colCount];
+
+                accuracies <- calculateAccuracy(resultLabels, gtlabels);
+
+                results <- c(results, i, accuracies[2,2], accuracies[2,3]);
+        }
+        results <- matrix(results, 3, maxDim);
+        #plot(results[1,], results[2,]);
+        #lines(results[1,], results[2,], type='b');
+        #title("Single Gaussian Cluster FPR over Dimensionality", xlab="Dimensions", ylab="False Positive Rate")
+}
+
+# generate False Positive and False Negative error rates for
+# Gaussian clusters of varying dimension using simple skinny-dip
 testDimensionsOld <- function(maxDim) {
-	results = c()
+	results = c();
 	for (i in 1:maxDim) {
 		data <- generateGaussian(i);
 		colCount <- ncol(data)
@@ -17,7 +69,7 @@ testDimensionsOld <- function(maxDim) {
 		results <- c(results, i, accuracies[2,2], accuracies[2,3]);
 	}
 	results <- matrix(results, 3, maxDim);
-	plot();
+	plot(results[1,], results[2,]);
 	lines(results[1,], results[2,], type='b');
 	title("Single Gaussian Cluster FPR over Dimensionality", xlab="Dimensions", ylab="False Positive Rate")
 	
@@ -193,21 +245,21 @@ generateGaussian <- function(dimensions = 2, noiseFraction0to1=0.8) {
     dataMatrix <- c();
     
     for (i in 1:dimensions) {
-        dataMatrix <- c(dataMatrix, rnorm(pointsPerDimension, 0.5, 0.05), runif(noiseCount));    
+        dataMatrix <- c(dataMatrix, rnorm(clusterSize, 0.5, 0.05), runif(noiseCount));    
     }
     
     # ground truth labels
-    dataMatrix <- c(dataMatrix, rep(1, pointsPerDimension), rep(0, noiseCount));
+    dataMatrix <- c(dataMatrix, rep(1, clusterSize), rep(0, noiseCount));
+
 
     # match data structure of paper data by adding leading column
-    dataMatrix <- c(rep(-1, pointsPerDimension), rep(-1, noiseCount), dataMatrix);
+    dataMatrix <- c(rep(-1, clusterSize), rep(-1, noiseCount), dataMatrix);
 
     # reshape 
-    dataMatrix <- matrix(dataMatrix, pointsPerDimension+noiseCount, dimensions+2);    
-
+    dataMatrix <- matrix(dataMatrix, (clusterSize+noiseCount), (dimensions+2));    
     # label underlying noise
     colCount = ncol(dataMatrix)
-    dataMatrix[sqrt(rowSums((dataMatrix[,2:(colCount-1)]-matrix(rep(0.5, dimensions*(pointsPerDimension+noiseCount)), pointsPerDimension+noiseCount, dimensions))^2))<0.1,colCount] <- 1;
+    dataMatrix[sqrt(rowSums((dataMatrix[,2:(colCount-1)]-matrix(rep(0.5, dimensions*(clusterSize+noiseCount)), clusterSize+noiseCount, dimensions))^2))<0.1,colCount] <- 1;
 
     # shuffle
     dataMatrix <- dataMatrix[sample(1:nrow(dataMatrix), nrow(dataMatrix)),]
