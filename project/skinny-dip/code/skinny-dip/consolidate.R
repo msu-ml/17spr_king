@@ -1,27 +1,90 @@
 clusterLabels <- function(labels, data) {
 	
-	dimensions = ncol(data);
+	newLabels <- labels;
+	#newLabels <- c(rep(0, length(labels)))
+	newLabels[] <- 0;
+	#print(newLabels)
+	dimensions <- ncol(data);
 	# Ignore 0 cluster, because we won't change rejection class
 	for (class in 1:max(labels)) {
 		mask = labels==class;
 		evidence = data[mask,];
 		
-		if (dimensions < 2) {
+		if (dimensions < 2) { # TODO, update evidence in single dimension
 			mean <- mean(evidence);
 			variance <- (var(evidence));
+			newLabels[labels==class] <- class;
 		} else {
-			print(evidence);
+			print(dimensions);
 			mean <- colMeans(evidence);
-			print(mean);
 			variance <- (cov(evidence));
-			print(variance);
-			scores = mahalanobis(evidence, mean, variance);
-			print(sum(scores<2));
-			plot(evidence[,1], evidence[,2], xlim=c(0,1), ylim=c(0,1));
+			scores = as.matrix(sqrt(mahalanobis(data, mean, variance)));
+			scores = matrix(scores, nrow(data), 1)
+			
+			newPoints <- (scores<=3);
+
+			evidence = data[newPoints,];
+
+			#evidence = matrix(evidence, sum(scores[,1]), ncol(data));
+			#plot(evidence[,1], evidence[,2], xlim=c(0,1), ylim=c(0,1));
+
+			# udpate return labels
+			#print(newPoints[,1])
+			#print(newLabels[newPoints[,1]] == class)
+			newLabels[newPoints] <- class;
 		}
 	}
+	print(sum(newLabels != labels))
+	#print(labels);
+	#print(newLabels);
+	return(newLabels)
 }
 
+
+clusterLabels2 <- function(labels, data) {
+
+        newLabels <- labels;
+        #newLabels <- c(rep(0, length(labels)))
+        newLabels[] <- 0;
+        #print(newLabels)
+        dimensions <- ncol(data);
+        # Ignore 0 cluster, because we won't change rejection class
+        for (class in 1:max(labels)) {
+                mask = labels==class;
+                evidence = data[mask,];
+
+                if (dimensions < 2) { # TODO, update evidence in single dimension
+                        mean <- mean(evidence);
+                        variance <- (var(evidence));
+                        newLabels[labels==class] <- class;
+                } else {
+			mean <- colMeans(evidence);
+			ind_cov <- matrix(rep(0, dimensions^2), dimensions, dimensions)
+			for (d in 1:dimensions) {
+                        	ind_cov[d,d] <- var(evidence[,d]);
+			}
+			
+                       	scores = as.matrix(sqrt(mahalanobis(data, mean, ind_cov)));
+                       	scores = matrix(scores, nrow(data), 1)
+
+       	                newPoints <- (scores<=3);
+
+       	                evidence = data[newPoints,];
+
+               	        #evidence = matrix(evidence, sum(scores[,1]), ncol(data));
+                       	#plot(evidence[,1], evidence[,2], xlim=c(0,1), ylim=c(0,1));
+
+                       	# udpate return labels
+                       	#print(newPoints[,1])
+                       	#print(newLabels[newPoints[,1]] == class)
+                       	newLabels[newPoints] <- class;
+                }
+        }
+        print(sum(newLabels != labels))
+        #print(labels);
+        #print(newLabels);
+        return(newLabels)
+}
 
 
 # generate False Positive and False Negative error rates for
@@ -39,18 +102,23 @@ testDimensionsNew <- function(maxDim) {
  		
 		# perform additional clustering
 		newLabels <- clusterLabels(resultLabels, dataMatrix);
-               
+
 		gtlabels <- data[,colCount];
 
-                accuracies <- calculateAccuracy(resultLabels, gtlabels);
+                accuracies <- calculateAccuracy(newLabels, gtlabels);
+		print(accuracies);
 
                 results <- c(results, i, accuracies[2,2], accuracies[2,3]);
         }
         results <- matrix(results, 3, maxDim);
-        #plot(results[1,], results[2,]);
-        #lines(results[1,], results[2,], type='b');
-        #title("Single Gaussian Cluster FPR over Dimensionality", xlab="Dimensions", ylab="False Positive Rate")
+        plot(results[1,], results[2,]);
+        lines(results[1,], results[2,], type='b');
+        title("Single Gaussian Cluster FPR over Dimensionality", xlab="Dimensions", ylab="False Negative Rate")
+
+	return(results);
 }
+
+
 
 # generate False Positive and False Negative error rates for
 # Gaussian clusters of varying dimension using simple skinny-dip
@@ -75,6 +143,13 @@ testDimensionsOld <- function(maxDim) {
 	
 	#plot(results[1,], results[3,]);
 	#lines(results[1,], results[3,]);
+
+	return(results);
+}
+
+
+compareSynthetic <- function() {
+	
 }
 
 
@@ -88,6 +163,8 @@ runningExample <- function(dimensions=3) {
 
 	runningExampleDataMatrix <- as.matrix(runningExampleDataSet[,2:(colCount-1)]); 
         resultLabels <- skinnyDipClusteringFullSpace(runningExampleDataMatrix); 
+	newLabels <- clusterLabels(resultLabels, runningExampleDataMatrix);
+	resultLabels <- newLabels;
 	
 	labels <- generateAccuracyLabels(resultLabels, runningExampleDataSet[,colCount]);
 	
@@ -235,7 +312,7 @@ generateMultiDim <- function(dims) {
     
 }
 
-generateGaussian <- function(dimensions = 2, noiseFraction0to1=0.8) {
+generateGaussian <- function(dimensions = 2, noiseFraction0to1=0.7) {
     set.seed(195);
     pointsPerDimension <- 100;
     clusterSize <- pointsPerDimension*dimensions;
@@ -259,7 +336,7 @@ generateGaussian <- function(dimensions = 2, noiseFraction0to1=0.8) {
     dataMatrix <- matrix(dataMatrix, (clusterSize+noiseCount), (dimensions+2));    
     # label underlying noise
     colCount = ncol(dataMatrix)
-    dataMatrix[sqrt(rowSums((dataMatrix[,2:(colCount-1)]-matrix(rep(0.5, dimensions*(clusterSize+noiseCount)), clusterSize+noiseCount, dimensions))^2))<0.1,colCount] <- 1;
+    dataMatrix[sqrt(rowSums((dataMatrix[,2:(colCount-1)]-matrix(rep(0.5, dimensions*(clusterSize+noiseCount)), clusterSize+noiseCount, dimensions))^2))<0.2,colCount] <- 1;
 
     # shuffle
     dataMatrix <- dataMatrix[sample(1:nrow(dataMatrix), nrow(dataMatrix)),]
