@@ -13,15 +13,19 @@ clusterLabels <- function(labels, data) {
 		if (dimensions < 2) { # TODO, update evidence in single dimension
 			mean <- mean(evidence);
 			variance <- (var(evidence));
-			newLabels[labels==class] <- class;
+
+			scores = (data-rep(mean, nrow(data)))/sqrt(variance);
+			
+			newLabels[scores<=4] <- class;
 		} else {
-			print(dimensions);
 			mean <- colMeans(evidence);
 			variance <- (cov(evidence));
-			scores = as.matrix(sqrt(mahalanobis(data, mean, variance)));
+			
+			# perform mahalnobis distance with pseudoinverse
+			scores = as.matrix(sqrt(mahalanobis(data, mean, ginv(variance), TRUE)));
 			scores = matrix(scores, nrow(data), 1)
 			
-			newPoints <- (scores<=3);
+			newPoints <- (scores<=4);
 
 			evidence = data[newPoints,];
 
@@ -34,7 +38,6 @@ clusterLabels <- function(labels, data) {
 			newLabels[newPoints] <- class;
 		}
 	}
-	print(sum(newLabels != labels))
 	#print(labels);
 	#print(newLabels);
 	return(newLabels)
@@ -67,7 +70,7 @@ clusterLabels2 <- function(labels, data) {
                        	scores = as.matrix(sqrt(mahalanobis(data, mean, ind_cov)));
                        	scores = matrix(scores, nrow(data), 1)
 
-       	                newPoints <- (scores<=3);
+       	                newPoints <- (scores<=4);
 
        	                evidence = data[newPoints,];
 
@@ -80,7 +83,6 @@ clusterLabels2 <- function(labels, data) {
                        	newLabels[newPoints] <- class;
                 }
         }
-        print(sum(newLabels != labels))
         #print(labels);
         #print(newLabels);
         return(newLabels)
@@ -111,9 +113,9 @@ testDimensionsNew <- function(maxDim) {
                 results <- c(results, i, accuracies[2,2], accuracies[2,3]);
         }
         results <- matrix(results, 3, maxDim);
-        plot(results[1,], results[2,]);
-        lines(results[1,], results[2,], type='b');
-        title("Single Gaussian Cluster FPR over Dimensionality", xlab="Dimensions", ylab="False Negative Rate")
+        #plot(results[1,], results[2,]);
+        #lines(results[1,], results[2,], type='b');
+        #title("Single Gaussian Cluster FPR over Dimensionality", xlab="Dimensions", ylab="False Negative Rate")
 
 	return(results);
 }
@@ -132,14 +134,14 @@ testDimensionsOld <- function(maxDim) {
 		gtlabels <- data[,colCount];
 
 		accuracies <- calculateAccuracy(resultLabels, gtlabels);
-		print(accuracies[2,2])
+		#print(accuracies[2,2])
 
 		results <- c(results, i, accuracies[2,2], accuracies[2,3]);
 	}
 	results <- matrix(results, 3, maxDim);
-	plot(results[1,], results[2,]);
-	lines(results[1,], results[2,], type='b');
-	title("Single Gaussian Cluster FPR over Dimensionality", xlab="Dimensions", ylab="False Positive Rate")
+	#plot(results[1,], results[2,]);
+	#lines(results[1,], results[2,], type='b');
+	#title("Single Gaussian Cluster FPR over Dimensionality", xlab="Dimensions", ylab="False Positive Rate")
 	
 	#plot(results[1,], results[3,]);
 	#lines(results[1,], results[3,]);
@@ -148,7 +150,27 @@ testDimensionsOld <- function(maxDim) {
 }
 
 
-compareSynthetic <- function() {
+compareSynthetic <- function(maxDim=3) {
+	#dataSet <- generateGaussian(maxDim);
+	#colCount <- ncol(dataSet);
+	#dataMatrix <- as.matrix(dataSet[,2:(colCount-1)]);
+	
+	#resultLabels <- skinnyDipClusteringFullSpace(dataMatrix);
+	#newLabels <- clusteringLabels(resultLabels, dataMatrix);
+	#gtlabels <- dataSet[,colCount];
+
+	#oldAccuracies <- calculateAccuracy(resultLabels, gtlabels);
+	
+	oldAccuracies <- testDimensionsOld(maxDim);
+	newAccuracies <- testDimensionsNew(maxDim);
+	
+	print(oldAccuracies);
+
+	plot(oldAccuracies[1,], oldAccuracies[2,]);
+	lines(oldAccuracies[1,], oldAccuracies[2,], type='b', col=2);
+	points(newAccuracies[1,], newAccuracies[2,]);
+	lines(newAccuracies[1,], newAccuracies[2,], type='b', col=3);
+	legend("bottomleft", c('old', 'reclustered'), bg="white",  pch='o', col=c(2,3), cex=0.75);
 	
 }
 
@@ -188,7 +210,7 @@ runningExample <- function(dimensions=3) {
 	}
 	else if (dimensions == 2) {
 		# hard coded 2D plot
-		plot(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], col=gtcols, xlim=c(0,1), ylim=c(0,1));
+		plot(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], col=resultLabels, xlim=c(0,1), ylim=c(0,1));
 		legend("bottomleft", labels, bg="white",  pch='o', col=classCols, cex=0.75)
 		title("Accuracies in SkinnyDip Running Example")
 	}	
@@ -307,11 +329,6 @@ generateDataSet <- function(noiseFraction0to1=0.8){
 }
 
 
-# Generate our own custom data in multiple dimension
-generateMultiDim <- function(dims) {
-    
-}
-
 generateGaussian <- function(dimensions = 2, noiseFraction0to1=0.7) {
     set.seed(195);
     pointsPerDimension <- 100;
@@ -345,3 +362,5 @@ generateGaussian <- function(dimensions = 2, noiseFraction0to1=0.7) {
     return(dataMatrix);
     
 }
+
+
