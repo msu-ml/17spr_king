@@ -1,3 +1,5 @@
 library(diptest)
 library(dbscan)
 source('func.R')
+source('consolidate.R')
+source('realDataTest.R')

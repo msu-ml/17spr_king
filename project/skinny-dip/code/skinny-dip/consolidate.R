@@ -16,7 +16,7 @@ clusterLabels <- function(labels, data) {
 
 			scores = (data-rep(mean, nrow(data)))/sqrt(variance);
 			
-			newLabels[scores<=4] <- class;
+			newLabels[scores<=3] <- class;
 		} else {
 			mean <- colMeans(evidence);
 			variance <- (cov(evidence));
@@ -25,7 +25,7 @@ clusterLabels <- function(labels, data) {
 			scores = as.matrix(sqrt(mahalanobis(data, mean, ginv(variance), TRUE)));
 			scores = matrix(scores, nrow(data), 1)
 			
-			newPoints <- (scores<=4);
+			newPoints <- (scores<3);
 
 			evidence = data[newPoints,];
 
@@ -70,7 +70,7 @@ clusterLabels2 <- function(labels, data) {
                        	scores = as.matrix(sqrt(mahalanobis(data, mean, ind_cov)));
                        	scores = matrix(scores, nrow(data), 1)
 
-       	                newPoints <- (scores<=4);
+       	                newPoints <- (scores<=2);
 
        	                evidence = data[newPoints,];
 
@@ -170,13 +170,13 @@ compareSynthetic <- function(maxDim=3) {
 	lines(oldAccuracies[1,], oldAccuracies[2,], type='b', col=2);
 	points(newAccuracies[1,], newAccuracies[2,]);
 	lines(newAccuracies[1,], newAccuracies[2,], type='b', col=3);
-	legend("bottomleft", c('old', 'reclustered'), bg="white",  pch='o', col=c(2,3), cex=0.75);
+	legend("topleft", c('old', 'reclustered'), bg="white",  pch='o', col=c(2,3), cex=0.75);
 	
 }
 
 
 
-runningExample <- function(dimensions=3) {
+runningExample <- function(dimensions=3, plotGT=FALSE) {
         #runningExampleDataSet <- generateDataSet();
 	#runningExampleDataSet <- generateSyntheticDataSet(10, 2, 0.6)
         runningExampleDataSet <- generateGaussian(dimensions);	
@@ -202,9 +202,13 @@ runningExample <- function(dimensions=3) {
 	#print(classCols)
 	resultLabels[resultLabels == 0] <- 8;
 
+	if(plotGT) {
+		resultLables <- gtcols;
+	}
+
         if (dimensions == 1) {
 		# hard coded 1D plot
-		plot(runningExampleDataMatrix[,1], rep(0.5, nrow(runningExampleDataMatrix)), col=gtcols, xlim=c(0,1));
+		plot(runningExampleDataMatrix[,1], rep(0.5, nrow(runningExampleDataMatrix)), col=resultLabels, xlim=c(0,1));
 		legend("bottomleft", labels, bg="white",  pch='o', col=classCols, cex=0.75)
         	title("Accuracies in SkinnyDip Running Example")
 	}
@@ -216,12 +220,12 @@ runningExample <- function(dimensions=3) {
 	}	
 	else if (dimensions == 3) {
 		# hard coded 3D plot
-        	scatterplot3d(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], runningExampleDataMatrix[,3], color=gtcols)
+        	scatterplot3d(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], runningExampleDataMatrix[,3], color=resultLabels)
         	legend("topleft", labels, bg="white", pch='o', col=classCols, cex=0.75)
 	}
 }
 
-
+# create the legend labels for our graph, mimicing the same coloring pattern as initial plotting
 generateAccuracyLabels <- function(labels, ground_truth) {
 	accuracies <- calculateAccuracy(labels, ground_truth)
 	accuracyLabels <- matrix("", nrow(accuracies), 2)
@@ -353,7 +357,7 @@ generateGaussian <- function(dimensions = 2, noiseFraction0to1=0.7) {
     dataMatrix <- matrix(dataMatrix, (clusterSize+noiseCount), (dimensions+2));    
     # label underlying noise
     colCount = ncol(dataMatrix)
-    dataMatrix[sqrt(rowSums((dataMatrix[,2:(colCount-1)]-matrix(rep(0.5, dimensions*(clusterSize+noiseCount)), clusterSize+noiseCount, dimensions))^2))<0.2,colCount] <- 1;
+    dataMatrix[sqrt(rowSums((dataMatrix[,2:(colCount-1)]-matrix(rep(0.5, dimensions*(clusterSize+noiseCount)), clusterSize+noiseCount, dimensions))^2))<0.1,colCount] <- 1;
 
     # shuffle
     dataMatrix <- dataMatrix[sample(1:nrow(dataMatrix), nrow(dataMatrix)),]
