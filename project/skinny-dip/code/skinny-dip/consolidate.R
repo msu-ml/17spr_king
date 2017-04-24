@@ -14,7 +14,7 @@ clusterLabels <- function(labels, data) {
 			mean <- mean(evidence);
 			variance <- (var(evidence));
 
-			scores = (data-rep(mean, nrow(data)))/sqrt(variance);
+			scores = abs((data-rep(mean, nrow(data)))/sqrt(variance));
 			
 			newLabels[scores<=3] <- class;
 		} else {
@@ -110,9 +110,9 @@ testDimensionsNew <- function(maxDim) {
                 accuracies <- calculateAccuracy(newLabels, gtlabels);
 		print(accuracies);
 
-                results <- c(results, i, accuracies[2,2], accuracies[2,3]);
+                results <- c(results, i, accuracies[2,2], accuracies[2,3], accuracies[2,1]);
         }
-        results <- matrix(results, 3, maxDim);
+        results <- matrix(results, 4, maxDim);
         #plot(results[1,], results[2,]);
         #lines(results[1,], results[2,], type='b');
         #title("Single Gaussian Cluster FPR over Dimensionality", xlab="Dimensions", ylab="False Negative Rate")
@@ -134,11 +134,11 @@ testDimensionsOld <- function(maxDim) {
 		gtlabels <- data[,colCount];
 
 		accuracies <- calculateAccuracy(resultLabels, gtlabels);
-		#print(accuracies[2,2])
+		print(accuracies)
 
-		results <- c(results, i, accuracies[2,2], accuracies[2,3]);
+		results <- c(results, i, accuracies[2,2], accuracies[2,3], accuracies[2,1]);
 	}
-	results <- matrix(results, 3, maxDim);
+	results <- matrix(results, 4, maxDim);
 	#plot(results[1,], results[2,]);
 	#lines(results[1,], results[2,], type='b');
 	#title("Single Gaussian Cluster FPR over Dimensionality", xlab="Dimensions", ylab="False Positive Rate")
@@ -148,9 +148,7 @@ testDimensionsOld <- function(maxDim) {
 
 	return(results);
 }
-
-
-compareSynthetic <- function(maxDim=3) {
+compareSyntheticROC <- function(maxDim=3) {
 	#dataSet <- generateGaussian(maxDim);
 	#colCount <- ncol(dataSet);
 	#dataMatrix <- as.matrix(dataSet[,2:(colCount-1)]);
@@ -170,13 +168,39 @@ compareSynthetic <- function(maxDim=3) {
 	lines(oldAccuracies[1,], oldAccuracies[2,], type='b', col=2);
 	points(newAccuracies[1,], newAccuracies[2,]);
 	lines(newAccuracies[1,], newAccuracies[2,], type='b', col=3);
-	legend("topleft", c('old', 'reclustered'), bg="white",  pch='o', col=c(2,3), cex=0.75);
+	legend("topleft", c('Original', 'Reclustered'), bg="white",  pch='o', col=c(2,3), cex=0.75);
+	title("False Negative Rates for original and Reclustered versions of SkinnyDip")
+	
+}
+
+compareSynthetic <- function(maxDim=3) {
+	#dataSet <- generateGaussian(maxDim);
+	#colCount <- ncol(dataSet);
+	#dataMatrix <- as.matrix(dataSet[,2:(colCount-1)]);
+	
+	#resultLabels <- skinnyDipClusteringFullSpace(dataMatrix);
+	#newLabels <- clusteringLabels(resultLabels, dataMatrix);
+	#gtlabels <- dataSet[,colCount];
+
+	#oldAccuracies <- calculateAccuracy(resultLabels, gtlabels);
+	
+	oldAccuracies <- testDimensionsOld(maxDim);
+	newAccuracies <- testDimensionsNew(maxDim);
+	
+	print(oldAccuracies);
+
+	plot(oldAccuracies[1,], oldAccuracies[2,], xlab="Dimensions");
+	lines(oldAccuracies[1,], oldAccuracies[2,], type='b', col=2);
+	points(newAccuracies[1,], newAccuracies[2,]);
+	lines(newAccuracies[1,], newAccuracies[2,], type='b', col=3);
+	legend("topleft", c('Original', 'Reclustered'), bg="white",  pch='o', col=c(2,3), cex=0.75);
+	title("False Negative Rates for original and Reclustered versions of SkinnyDip")
 	
 }
 
 
 
-runningExample <- function(dimensions=3, plotGT=FALSE) {
+runningExample <- function(dimensions=3, new=FALSE, plotGT=FALSE) {
         #runningExampleDataSet <- generateDataSet();
 	#runningExampleDataSet <- generateSyntheticDataSet(10, 2, 0.6)
         runningExampleDataSet <- generateGaussian(dimensions);	
@@ -185,9 +209,10 @@ runningExample <- function(dimensions=3, plotGT=FALSE) {
 
 	runningExampleDataMatrix <- as.matrix(runningExampleDataSet[,2:(colCount-1)]); 
         resultLabels <- skinnyDipClusteringFullSpace(runningExampleDataMatrix); 
-	newLabels <- clusterLabels(resultLabels, runningExampleDataMatrix);
-	resultLabels <- newLabels;
-	
+	if (new) {
+		resultLabels <- clusterLabels(resultLabels, runningExampleDataMatrix);
+	}
+
 	labels <- generateAccuracyLabels(resultLabels, runningExampleDataSet[,colCount]);
 	
         
@@ -203,25 +228,25 @@ runningExample <- function(dimensions=3, plotGT=FALSE) {
 	resultLabels[resultLabels == 0] <- 8;
 
 	if(plotGT) {
-		resultLables <- gtcols;
+		resultLabels <- gtcols;
 	}
 
         if (dimensions == 1) {
 		# hard coded 1D plot
 		plot(runningExampleDataMatrix[,1], rep(0.5, nrow(runningExampleDataMatrix)), col=resultLabels, xlim=c(0,1));
-		legend("bottomleft", labels, bg="white",  pch='o', col=classCols, cex=0.75)
-        	title("Accuracies in SkinnyDip Running Example")
+		#legend("bottomleft", labels, bg="white",  pch='o',  cex=0.75)
+        	title("Ground Truth for Single Gaussian 1D")
 	}
 	else if (dimensions == 2) {
 		# hard coded 2D plot
 		plot(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], col=resultLabels, xlim=c(0,1), ylim=c(0,1));
-		legend("bottomleft", labels, bg="white",  pch='o', col=classCols, cex=0.75)
-		title("Accuracies in SkinnyDip Running Example")
+		#legend("bottomleft", labels, bg="white",  pch='o', col=classCols, cex=0.75)
+		title("Ground Truth for Single Gaussian 2D")
 	}	
 	else if (dimensions == 3) {
 		# hard coded 3D plot
-        	scatterplot3d(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], runningExampleDataMatrix[,3], color=resultLabels)
-        	legend("topleft", labels, bg="white", pch='o', col=classCols, cex=0.75)
+        	scatterplot3d(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], runningExampleDataMatrix[,3], color=resultLabels,main="GroundTruth for Single Gaussian 3D")
+        	#legend("topleft", labels, bg="white", pch='o', col=classCols, cex=0.75)
 	}
 }
 
@@ -318,12 +343,12 @@ generateDataSet <- function(noiseFraction0to1=0.8){
     dataMatrix <- matrix(c(xVals, yVals), length(xVals), 2);
 
     groundTruthLabels <- replicate(length(xVals),0)
-    groundTruthLabels[sqrt(rowSums((dataMatrix-matrix(replicate(length(xVals), c(0.9,0.2)), length(xVals), 2, byrow=TRUE))^2))<0.04] <- 1
-    groundTruthLabels[sqrt(rowSums((dataMatrix-matrix(replicate(length(xVals), c(0.8,0.2)), length(xVals), 2, byrow=TRUE))^2))<0.04] <- 2
+    groundTruthLabels[sqrt(rowSums((dataMatrix-matrix(replicate(length(xVals), c(0.9,0.2)), length(xVals), 2, byrow=TRUE))^2))<0.05] <- 1
+    groundTruthLabels[sqrt(rowSums((dataMatrix-matrix(replicate(length(xVals), c(0.8,0.2)), length(xVals), 2, byrow=TRUE))^2))<0.05] <- 2
     groundTruthLabels[xVals>0.2 & xVals<0.205 & yVals>0.1 & yVals<0.9] <- 3
-    groundTruthLabels[sqrt(rowSums((dataMatrix-matrix(replicate(length(xVals), c(0.7,0.9)), length(xVals), 2, byrow=TRUE))^2))<0.02] <- 4
+    groundTruthLabels[sqrt(rowSums((dataMatrix-matrix(replicate(length(xVals), c(0.7,0.9)), length(xVals), 2, byrow=TRUE))^2))<0.03] <- 4
     groundTruthLabels[xVals>0.44 & xVals<0.56 & yVals>0.44 & yVals<0.56] <- 5
-    groundTruthLabels[sqrt(rowSums((dataMatrix-matrix(replicate(length(xVals), c(0.8,0.3)), length(xVals), 2, byrow=TRUE))^2))<0.04] <- 6
+    groundTruthLabels[sqrt(rowSums((dataMatrix-matrix(replicate(length(xVals), c(0.8,0.3)), length(xVals), 2, byrow=TRUE))^2))<0.05] <- 6
 
     dataMatrix <- cbind(matrix(1:length(xVals),length(xVals),1), dataMatrix, matrix(groundTruthLabels, length(xVals), 1))
     ## random permute
@@ -367,4 +392,76 @@ generateGaussian <- function(dimensions = 2, noiseFraction0to1=0.7) {
     
 }
 
+testMultiGaussian <- function(new=FALSE, plotGT=FALSE) {
+        runningExampleDataSet <- multiGaussian();
 
+        colCount <- ncol(runningExampleDataSet);
+
+        runningExampleDataMatrix <- as.matrix(runningExampleDataSet[,2:(colCount-1)]);
+        resultLabels <- skinnyDipClusteringFullSpace(runningExampleDataMatrix);
+        if (new) {
+                resultLabels <- clusterLabels(resultLabels, runningExampleDataMatrix);
+        }
+
+        labels <- generateAccuracyLabels(resultLabels, runningExampleDataSet[,colCount]);
+
+
+        gtcols = runningExampleDataSet[,colCount]
+        #print(gtcols)
+        gtcols[gtcols == 0] <- 8
+
+        classCols <- labels[,2]
+        labels <- labels[,1]
+        classCols[1] <- 8
+        #print(labels)
+        #print(classCols)
+        resultLabels[resultLabels == 0] <- 8;
+
+        if(plotGT) {
+                resultLables <- gtcols;
+        }
+
+	# hard coded 3D plot
+        scatterplot3d(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], runningExampleDataMatrix[,3], color=8, xlim=c(0,1), ylim=c(0,1), zlim=c(0,1), main="Random Data Unlabeled")
+        #legend("topleft", labels, bg="white", pch='o', col=classCols, cex=0.75)
+
+
+}
+
+
+multiGaussian <- function() {
+    set.seed(195);
+    dimensions <- 3;
+    noiseFraction0to1 <- 0.7;
+    pointsPerDimension <- 100;
+    clusterSize <- pointsPerDimension*dimensions;
+    nonNoiseCount <- clusterSize;
+    noiseCount <- round((nonNoiseCount*noiseFraction0to1)/(1-noiseFraction0to1));
+
+    dataMatrix <- c();
+
+    for (i in 1:dimensions) {
+        dataMatrix <- c(dataMatrix, rnorm(clusterSize, 0.25, 0.05), runif(noiseCount));
+        dataMatrix <- c(dataMatrix, rnorm(clusterSize, 0.75, 0.1), runif(noiseCount));
+    }
+
+    # ground truth labels
+    dataMatrix <- c(dataMatrix, rep(1, clusterSize), rep(0, noiseCount), rep(2, clusterSize), rep(0, noiseCount));
+
+    # match data structure of paper data by adding leading column
+    dataMatrix <- c(rep(c(rep(-1, clusterSize), rep(-1, noiseCount)),2), dataMatrix);
+
+    # reshape 
+    dataMatrix <- matrix(dataMatrix, (clusterSize+noiseCount)*2, (dimensions+2));
+    # label underlying noise
+    colCount = ncol(dataMatrix)
+    dataMatrix[sqrt(rowSums((dataMatrix[,2:(colCount-1)]-matrix(rep(0.25, dimensions*(clusterSize+noiseCount)), 2*(clusterSize+noiseCount), dimensions))^2))<0.1,colCount] <- 1;
+dataMatrix[sqrt(rowSums((dataMatrix[,2:(colCount-1)]-matrix(rep(0.75, dimensions*(clusterSize+noiseCount)), 2*(clusterSize+noiseCount), dimensions))^2))<0.2,colCount] <- 2;
+
+    # shuffle
+    dataMatrix <- dataMatrix[sample(1:nrow(dataMatrix), nrow(dataMatrix)),]
+
+    set.seed(NULL);
+    return(dataMatrix);
+
+}
