@@ -26,18 +26,18 @@ runningDataTest <- function(new = TRUE, plotGT=FALSE) {
 
         resultLabels[resultLabels == 0] <- 8;
 
-	#temp <- resultLabels;
-	#resultLabels[temp==1] <- 6;
-	#resultLabels[temp==2] <- 4;
-	#resultLabels[temp==3] <- 1;
-	#resultLabels[temp==4] <- 3;
-	#resultLabels[temp==5] <- 2;
-	#resultLabels[temp==6] <- 5;
+	temp <- resultLabels;
+	resultLabels[temp==1] <- 6;
+	resultLabels[temp==2] <- 4;
+	resultLabels[temp==3] <- 1;
+	resultLabels[temp==4] <- 3;
+	resultLabels[temp==5] <- 2;
+	resultLabels[temp==6] <- 5;
 	
 
         # hard coded 2D plot
         plot(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], col=resultLabels, xlim=c(0,1), ylim=c(0,1));
-        legend("bottomleft", labels, bg="white",  pch='o', col=classCols, cex=0.75)
+        #legend("bottomleft", labels, bg="white",  pch='o', col=classCols, cex=0.75)
         title("SkinnyDip Running Example Ground Truth")
 
 }
