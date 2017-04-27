@@ -418,12 +418,12 @@ testMultiGaussian <- function(new=FALSE, plotGT=FALSE) {
         resultLabels[resultLabels == 0] <- 8;
 
         if(plotGT) {
-                resultLables <- gtcols;
+		resultLabels <- gtcols;
         }
 
 	# hard coded 3D plot
-        scatterplot3d(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], runningExampleDataMatrix[,3], color=8, xlim=c(0,1), ylim=c(0,1), zlim=c(0,1), main="Random Data Unlabeled")
-        #legend("topleft", labels, bg="white", pch='o', col=classCols, cex=0.75)
+        scatterplot3d(runningExampleDataMatrix[,1], runningExampleDataMatrix[,2], runningExampleDataMatrix[,3], color=resultLabels, xlim=c(0,1), ylim=c(0,1), zlim=c(0,1), main="Random Data SkinnyDip+Recluster")
+        legend("topleft", labels, bg="white", pch='o', col=classCols, cex=0.75)
 
 
 }
